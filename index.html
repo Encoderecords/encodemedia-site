@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encode Media — The long game.</title>
+<meta name="description" content="Encode Media — brand, content, and marketing strategy for clients on retainer. Handled every month, not once and abandoned. New York.">
+<meta name="theme-color" content="#15161a">
+<link rel="canonical" href="https://encodemedia.io/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 100'%3E%3Crect width='110' height='100' fill='%2315161a'/%3E%3Cpath d='M10 12 H28 L18 88 H0 Z' fill='%23EFECE4'/%3E%3Cpath d='M41 12 H65 L55 88 H31 Z' fill='%23EFECE4'/%3E%3Cpath d='M78 12 H108 L98 88 H68 Z' fill='%23EFECE4'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Encode Media">
+<meta property="og:title" content="Encode Media — The long game.">
+<meta property="og:description" content="Encode Media — brand, content, and marketing strategy for clients on retainer. Handled every month, not once and abandoned. New York.">
+<meta property="og:url" content="https://encodemedia.io/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Encode Media — The long game.">
+<meta name="twitter:description" content="Encode Media — brand, content, and marketing strategy for clients on retainer. Handled every month, not once and abandoned. New York.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Archivo:wght@400;500&display=swap">
+<style>
+  html{background:#15161a;}
+  body{margin:0;}
+  img{max-width:100%;}
+
+  :root{
+    --ground:#15161a;
+    --ink:#EFECE4;
+    --quiet:rgba(239,236,228,.58);
+    --hair:rgba(239,236,228,.34);
+    --brass:#C9A24B;
+    --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+    --sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .stage{
+    position:relative;
+    min-height:100vh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    padding:30px 34px 28px;
+    isolation:isolate;
+  }
+
+  /* ---- atmosphere: out-of-focus light, stands in for photography ---- */
+  .atmos{
+    position:absolute; inset:-14%;
+    z-index:0;
+    pointer-events:none;
+    background:
+      radial-gradient(38% 46% at 62% 24%, rgba(201,162,75,.52), transparent 68%),
+      radial-gradient(30% 38% at 30% 62%, rgba(120,104,86,.44), transparent 70%),
+      radial-gradient(46% 52% at 48% 88%, rgba(28,30,34,.9),  transparent 72%),
+      radial-gradient(70% 70% at 50% 40%, #3b3a37, #15161a 78%);
+    filter:blur(48px) saturate(112%);
+  }
+  .vignette{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(78% 68% at 50% 46%, transparent 42%, rgba(10,10,11,.72) 100%);
+  }
+  .grain{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    opacity:.34; mix-blend-mode:overlay;
+  }
+  .grain svg{width:100%;height:100%;display:block;}
+
+  /* ---- hairline structure drawn over the image ---- */
+  .lines{position:absolute; inset:0; z-index:3; pointer-events:none;}
+  .lines span{position:absolute;background:var(--hair);}
+  .lines .h1{left:0; right:0; top:11%;   height:1px; opacity:.5;}
+  .lines .h2{left:0; right:0; bottom:11%;height:1px; opacity:.5;}
+  .lines .v1{top:11%; bottom:11%; left:16%;  width:1px; opacity:.32;}
+  .lines .v2{top:11%; bottom:11%; right:16%; width:1px; opacity:.32;}
+  .lines .cx{top:11%; bottom:11%; left:50%;  width:1px; opacity:.18;}
+
+  .stage > .layer{position:relative; z-index:4;}
+
+  /* ---- masthead ---- */
+  .masthead{display:flex; flex-direction:column; align-items:center; gap:11px;}
+  .masthead svg{width:22px;height:20px;color:var(--ink);opacity:.92;display:block;}
+  .masthead .name{
+    font-size:11px; font-weight:500; letter-spacing:.42em;
+    text-transform:uppercase; color:var(--ink); padding-left:.42em;
+  }
+
+  /* ---- centre ---- */
+  .centre{
+    flex:1;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center;
+    padding-block:34px;
+  }
+  .hero{
+    font-family:var(--serif);
+    font-style:italic;
+    font-weight:400;
+    font-size:clamp(3.6rem,13.5vw,10rem);
+    line-height:.92;
+    letter-spacing:-.012em;
+    margin:0;
+    text-wrap:balance;
+  }
+  .said{
+    margin:clamp(24px,3.4vw,34px) 0 0;
+    max-width:32ch;
+    font-size:clamp(.82rem,1.7vw,.95rem);
+    line-height:1.62;
+    color:var(--quiet);
+    text-wrap:balance;
+  }
+  .enter{
+    display:inline-flex; align-items:center; gap:10px;
+    margin-top:clamp(30px,4vw,44px);
+    border:1px solid var(--hair);
+    color:var(--ink);
+    font-size:.82rem;
+    letter-spacing:.03em;
+    text-decoration:none;
+    padding:14px 26px;
+    background:rgba(239,236,228,.03);
+    backdrop-filter:blur(2px);
+    transition:border-color .25s ease, background .25s ease;
+  }
+  .enter svg{width:15px;height:13.6px;color:var(--brass);display:block;}
+  .enter:hover{border-color:var(--ink); background:rgba(239,236,228,.09);}
+  .enter:focus-visible{outline:2px solid var(--brass); outline-offset:4px;}
+
+  /* ---- footer marks ---- */
+  .marks{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:12px 20px;
+    font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--quiet);
+  }
+  .marks a{color:var(--quiet); text-decoration:none; transition:color .2s ease;}
+  .marks a:hover{color:var(--ink);}
+  .marks a:focus-visible{outline:1px solid var(--brass); outline-offset:3px;}
+
+  @media (prefers-reduced-motion: no-preference){
+    .masthead,.hero,.said,.enter,.marks{animation:lift 1s cubic-bezier(.2,.7,.3,1) both;}
+    .hero{animation-delay:.08s;} .said{animation-delay:.18s;}
+    .enter{animation-delay:.26s;} .marks{animation-delay:.34s;}
+    @keyframes lift{from{opacity:.001;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  }
+
+  @media (max-width:640px){
+    .stage{padding:24px 18px 22px;}
+    .lines .v1{left:7%;} .lines .v2{right:7%;}
+    .marks{justify-content:center; text-align:center; flex-direction:column; align-items:center; gap:7px;}
+  }
+</style>
+
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="atmos"></div>
+  <div class="vignette"></div>
+  <div class="grain">
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" preserveAspectRatio="none">
+      <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch"/></filter>
+      <rect width="100%" height="100%" filter="url(#gr)"/>
+    </svg>
+  </div>
+  <div class="lines" aria-hidden="true">
+    <span class="h1"></span><span class="h2"></span>
+    <span class="v1"></span><span class="v2"></span><span class="cx"></span>
+  </div>
+
+  <div class="layer masthead">
+    <svg viewBox="0 0 110 100" aria-hidden="true" focusable="false">
+      <path d="M10 12 H28 L18 88 H0 Z"  fill="currentColor"/>
+      <path d="M41 12 H65 L55 88 H31 Z" fill="currentColor"/>
+      <path d="M78 12 H108 L98 88 H68 Z" fill="currentColor"/>
+    </svg>
+    <span class="name">Encode Media</span>
+  </div>
+
+  <div class="layer centre">
+    <h1 class="hero">The long game.</h1>
+    <p class="said">Brand, content, and marketing strategy — handled every month, not once and abandoned.</p>
+    <a class="enter" href="mailto:info@encodemedia.io?subject=Free%20consultation%20—%20Encode%20Media">
+      <svg viewBox="0 0 110 100" aria-hidden="true" focusable="false">
+        <path d="M10 12 H28 L18 88 H0 Z"  fill="currentColor"/>
+        <path d="M41 12 H65 L55 88 H31 Z" fill="currentColor"/>
+        <path d="M78 12 H108 L98 88 H68 Z" fill="currentColor"/>
+      </svg>
+      Start a conversation
+    </a>
+  </div>
+
+  <div class="layer marks">
+    <span>New York</span>
+    <a href="mailto:info@encodemedia.io">info@encodemedia.io</a>
+  </div>
+
+</div>
+
+</body>
+</html>
