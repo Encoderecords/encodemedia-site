@@ -242,6 +242,47 @@
   .back:hover{color:var(--ink);}
   .back:focus-visible{outline:1px solid var(--brass); outline-offset:3px;}
 
+
+  /* ---- rally ---- */
+  .playlink{
+    display:inline-block; margin-top:16px;
+    background:none; border:0; padding:4px 2px;
+    font-family:inherit; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--quiet); cursor:pointer;
+    border-bottom:1px solid transparent;
+    transition:color .2s ease, border-color .2s ease;
+  }
+  .playlink:hover{color:var(--ink); border-color:var(--hair);}
+  .playlink:focus-visible{outline:1px solid var(--brass); outline-offset:3px;}
+
+  .rally{
+    position:fixed; inset:0; z-index:40;
+    display:flex; align-items:center; justify-content:center;
+    padding:22px;
+    background:rgba(10,10,11,.86);
+    backdrop-filter:blur(7px);
+  }
+  .rally[hidden]{display:none;}
+  .rally-box{width:min(560px,100%); border:1px solid var(--hair); background:var(--ground); padding:20px 20px 16px;}
+  .rally-head{display:flex; align-items:baseline; justify-content:space-between; gap:14px; margin-bottom:14px;}
+  .rally-head h2{margin:0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:1.45rem; letter-spacing:-.01em; color:var(--ink);}
+  .rally-close{background:none; border:0; padding:4px; font-family:inherit; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--quiet); cursor:pointer; transition:color .2s ease;}
+  .rally-close:hover{color:var(--ink);}
+  .rally-close:focus-visible{outline:1px solid var(--brass); outline-offset:3px;}
+
+  .rally-court{position:relative; border:1px solid var(--hair); background:rgba(239,236,228,.02); touch-action:none;}
+  .rally-court canvas{display:block; width:100%; height:auto;}
+  .rally-over{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:18px; background:rgba(21,22,26,.84);}
+  .rally-over[hidden]{display:none;}
+  .rally-over p{margin:0; max-width:32ch; font-size:.82rem; line-height:1.6; color:var(--quiet);}
+  .rally-over b{display:block; font-family:var(--serif); font-style:italic; font-weight:400; font-size:1.8rem; color:var(--ink);}
+  .rally-go{border:1px solid var(--hair); background:rgba(239,236,228,.04); color:var(--ink); font-family:inherit; font-size:.82rem; letter-spacing:.04em; padding:11px 24px; cursor:pointer; transition:border-color .25s ease, background .25s ease;}
+  .rally-go:hover{border-color:var(--ink); background:rgba(239,236,228,.1);}
+  .rally-go:focus-visible{outline:2px solid var(--brass); outline-offset:3px;}
+
+  .rally-foot{display:flex; justify-content:space-between; align-items:baseline; gap:14px; margin-top:12px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--quiet);}
+  .rally-foot b{color:var(--brass); font-weight:500;}
+
   /* ---- footer marks ---- */
   .marks{
     display:flex; justify-content:space-between; align-items:flex-end;
@@ -316,6 +357,7 @@
           </div>
           <p class="note" role="status" aria-live="polite"></p>
         </form>
+        <button type="button" class="playlink" data-rally>Need more time to think? Have a rally</button>
       </div>
 
       <div class="step step2" hidden>
@@ -370,6 +412,28 @@
     <a href="mailto:info@encodemedia.io">info@encodemedia.io</a>
   </div>
 
+</div>
+
+
+<div class="rally" hidden role="dialog" aria-modal="true" aria-label="Keep it alive">
+  <div class="rally-box">
+    <div class="rally-head">
+      <h2>Keep it alive.</h2>
+      <button type="button" class="rally-close">Close</button>
+    </div>
+    <div class="rally-court">
+      <canvas width="920" height="520"></canvas>
+      <div class="rally-over">
+        <b class="rally-msg">Ready?</b>
+        <p class="rally-sub">Move your pointer &mdash; or use the arrow keys &mdash; to keep the ball in play.</p>
+        <button type="button" class="rally-go">Start</button>
+      </div>
+    </div>
+    <div class="rally-foot">
+      <span>Rally <b class="rally-count">0</b></span>
+      <span>Best <b class="rally-best">0</b></span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -454,8 +518,10 @@
         var box = document.createElement('div');
         box.className = 'thanks';
         box.setAttribute('role', 'status');
-        box.innerHTML = '<strong>Thank you.</strong>' +
-                        '<span>We have your details and will be in touch within a day.</span>';
+        box.innerHTML = '<strong>Your move\u2019s made. Ours is next.</strong>' +
+                        '<span>We&rsquo;ll be in touch within a day. Until then &mdash; ' +
+                        'see how long you can keep it alive.</span>' +
+                        '<button type="button" class="playlink" data-rally>Have a rally</button>';
         steps.replaceWith(box);
         return;
       }
@@ -470,6 +536,207 @@
       say(note2, (err && err.message ? err.message : 'Something went wrong') +
           ' \u2014 email us at <a href="mailto:' + MAIL + '">' + MAIL + '</a>', 'error');
     });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var panel = document.querySelector('.rally');
+  if(!panel || !panel.querySelector('canvas')) return;
+
+  var canvas  = panel.querySelector('canvas');
+  var ctx     = canvas.getContext('2d');
+  var overlay = panel.querySelector('.rally-over');
+  var msgEl   = panel.querySelector('.rally-msg');
+  var subEl   = panel.querySelector('.rally-sub');
+  var goBtn   = panel.querySelector('.rally-go');
+  var closeEl = panel.querySelector('.rally-close');
+  var countEl = panel.querySelector('.rally-count');
+  var bestEl  = panel.querySelector('.rally-best');
+  var court   = panel.querySelector('.rally-court');
+
+  var W = canvas.width, H = canvas.height;
+  var INK = '#EFECE4', BRASS = '#C9A24B', HAIR = 'rgba(239,236,228,.22)';
+  var PAD_W = 14, PAD_H = 104, SKEW = 14, EDGE = 26, R = 8;
+
+  var running = false, raf = null, opener = null;
+  var rally = 0, best = 0;
+  var player, ai, ball;
+
+  try { best = parseInt(localStorage.getItem('em-rally-best'), 10) || 0; } catch(e){ best = 0; }
+  bestEl.textContent = best;
+
+  function reset(){
+    rally = 0;
+    countEl.textContent = '0';
+    player = { y: H/2 };
+    ai     = { y: H/2 };
+    var dir = Math.random() < 0.5 ? -1 : 1;
+    ball = { x: W/2, y: H/2, vx: 7 * dir, vy: (Math.random()*4 - 2) };
+  }
+
+  function bar(x, y, flip){
+    // a slanted bar, echoing the mark
+    var top = y - PAD_H/2, bot = y + PAD_H/2, k = flip ? -SKEW : SKEW;
+    ctx.beginPath();
+    ctx.moveTo(x + k, top);
+    ctx.lineTo(x + k + PAD_W, top);
+    ctx.lineTo(x + PAD_W, bot);
+    ctx.lineTo(x, bot);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = HAIR;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 16]);
+    ctx.beginPath();
+    ctx.moveTo(W/2, 10); ctx.lineTo(W/2, H - 10);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = INK;
+    bar(EDGE, player.y, false);
+    bar(W - EDGE - PAD_W, ai.y, true);
+
+    ctx.fillStyle = BRASS;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, R, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function clampPaddle(v){
+    return Math.max(PAD_H/2 + 6, Math.min(H - PAD_H/2 - 6, v));
+  }
+
+  function verdict(n){
+    if(n >= 30) return 'That&rsquo;s the long game.';
+    if(n >= 15) return 'Now we&rsquo;re talking.';
+    if(n >= 5)  return 'Not bad.';
+    return 'Early days.';
+  }
+
+  function finish(){
+    running = false;
+    if(rally > best){
+      best = rally;
+      bestEl.textContent = best;
+      try { localStorage.setItem('em-rally-best', String(best)); } catch(e){}
+    }
+    msgEl.innerHTML = rally;
+    subEl.innerHTML = verdict(rally) + ' You kept it alive for ' + rally +
+                      (rally === 1 ? ' return.' : ' returns.');
+    goBtn.textContent = 'Again';
+    overlay.hidden = false;
+    goBtn.focus();
+  }
+
+  function step(){
+    if(!running) return;
+
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    if(ball.y - R < 0){ ball.y = R; ball.vy *= -1; }
+    if(ball.y + R > H){ ball.y = H - R; ball.vy *= -1; }
+
+    // player paddle
+    var px = EDGE + PAD_W;
+    if(ball.vx < 0 && ball.x - R <= px && ball.x - R > px - 24){
+      if(Math.abs(ball.y - player.y) < PAD_H/2 + R){
+        ball.x = px + R;
+        ball.vx = Math.abs(ball.vx);
+        var off = (ball.y - player.y) / (PAD_H/2);
+        ball.vy = off * 7;
+        var sp = Math.min(Math.abs(ball.vx) * 1.045, 19);
+        ball.vx = sp;
+        rally++;
+        countEl.textContent = rally;
+      }
+    }
+
+    // opponent paddle
+    var ax = W - EDGE - PAD_W;
+    if(ball.vx > 0 && ball.x + R >= ax && ball.x + R < ax + 24){
+      if(Math.abs(ball.y - ai.y) < PAD_H/2 + R){
+        ball.x = ax - R;
+        ball.vx = -Math.abs(ball.vx);
+        var off2 = (ball.y - ai.y) / (PAD_H/2);
+        ball.vy = off2 * 7;
+      }
+    }
+
+    // opponent tracks, with a cap so it stays human-ish but rarely misses
+    var target = ball.vx > 0 ? ball.y : H/2;
+    var cap = 9.5;
+    var dy = target - ai.y;
+    ai.y = clampPaddle(ai.y + Math.max(-cap, Math.min(cap, dy)));
+
+    if(ball.x < -40 || ball.x > W + 40){ draw(); finish(); return; }
+
+    draw();
+    raf = requestAnimationFrame(step);
+  }
+
+  function start(){
+    reset();
+    overlay.hidden = true;
+    running = true;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(step);
+  }
+
+  function open(trigger){
+    opener = trigger || null;
+    panel.hidden = false;
+    reset(); draw();
+    msgEl.textContent = 'Ready?';
+    subEl.innerHTML = 'Move your pointer &mdash; or use the arrow keys &mdash; to keep the ball in play.';
+    goBtn.textContent = 'Start';
+    overlay.hidden = false;
+    goBtn.focus();
+  }
+
+  function close(){
+    running = false;
+    cancelAnimationFrame(raf);
+    panel.hidden = true;
+    if(opener && opener.focus) opener.focus();
+  }
+
+  function pointer(e){
+    var r = court.getBoundingClientRect();
+    var y = (e.clientY - r.top) * (H / r.height);
+    player.y = clampPaddle(y);
+    if(!running) draw();
+  }
+
+  court.addEventListener('pointermove', pointer);
+  court.addEventListener('pointerdown', pointer);
+
+  document.addEventListener('keydown', function(e){
+    if(panel.hidden) return;
+    if(e.key === 'Escape'){ close(); return; }
+    if(e.key === 'ArrowUp'){   player.y = clampPaddle(player.y - 34); if(!running) draw(); e.preventDefault(); }
+    if(e.key === 'ArrowDown'){ player.y = clampPaddle(player.y + 34); if(!running) draw(); e.preventDefault(); }
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden && running){ running = false; cancelAnimationFrame(raf); overlay.hidden = false;
+      msgEl.textContent = 'Paused'; subEl.textContent = 'You left the court.'; goBtn.textContent = 'Resume'; }
+  });
+
+  goBtn.addEventListener('click', start);
+  closeEl.addEventListener('click', close);
+  panel.addEventListener('click', function(e){ if(e.target === panel) close(); });
+
+  document.addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('[data-rally]') : null;
+    if(t){ e.preventDefault(); open(t); }
   });
 })();
 </script>
