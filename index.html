@@ -270,9 +270,23 @@
   .rally-close:hover{color:var(--ink);}
   .rally-close:focus-visible{outline:1px solid var(--brass); outline-offset:3px;}
 
-  .rally-court{position:relative; border:1px solid var(--hair); background:rgba(239,236,228,.02); touch-action:none;}
-  .rally-court canvas{display:block; width:100%; height:auto;}
-  .rally-over{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:18px; background:rgba(21,22,26,.84);}
+  .rally-court{
+    position:relative; overflow:hidden;
+    border:1px solid var(--hair);
+    background:radial-gradient(70% 90% at 50% 45%, rgba(201,162,75,.045), transparent 70%), rgba(239,236,228,.015);
+    touch-action:none;
+  }
+  .rally-court::after{
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:3;
+    background:radial-gradient(82% 74% at 50% 50%, transparent 46%, rgba(10,10,11,.6) 100%);
+  }
+  .court-grain{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    opacity:.3; mix-blend-mode:overlay;
+  }
+  .court-grain svg{width:100%;height:100%;display:block;}
+  .rally-court canvas{display:block; width:100%; height:auto; position:relative; z-index:1;}
+  .rally-over{position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:18px; background:rgba(21,22,26,.84);}
   .rally-over[hidden]{display:none;}
   .rally-over p{margin:0; max-width:32ch; font-size:.82rem; line-height:1.6; color:var(--quiet);}
   .rally-over b{display:block; font-family:var(--serif); font-style:italic; font-weight:400; font-size:1.8rem; color:var(--ink);}
@@ -423,6 +437,12 @@
     </div>
     <div class="rally-court">
       <canvas width="920" height="520"></canvas>
+      <div class="court-grain" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" focusable="false">
+          <filter id="cgr"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/></filter>
+          <rect width="100%" height="100%" filter="url(#cgr)"/>
+        </svg>
+      </div>
       <div class="rally-over">
         <b class="rally-msg">Ready?</b>
         <p class="rally-sub">Move your pointer &mdash; or use the arrow keys &mdash; to keep the ball in play.</p>
@@ -558,7 +578,10 @@
 
   var W = canvas.width, H = canvas.height;
   var INK = '#EFECE4', BRASS = '#C9A24B', HAIR = 'rgba(239,236,228,.22)';
-  var PAD_W = 14, PAD_H = 104, SKEW = 0, EDGE = 26, R = 8;
+  var PAD_W = 14, PAD_H = 104, SKEW = 0, EDGE = 26, R = 17;
+  var GROUND = '#15161a';
+  var spin = 0;
+  var trail = [];
 
   var running = false, raf = null, opener = null;
   var rally = 0, best = 0;
@@ -572,12 +595,12 @@
     countEl.textContent = '0';
     player = { y: H/2 };
     ai     = { y: H/2 };
+    spin = 0; trail = [];
     var dir = Math.random() < 0.5 ? -1 : 1;
     ball = { x: W/2, y: H/2, vx: 7 * dir, vy: (Math.random()*4 - 2) };
   }
 
   function bar(x, y, flip){
-    // a slanted bar, echoing the mark
     var top = y - PAD_H/2, bot = y + PAD_H/2, k = flip ? -SKEW : SKEW;
     ctx.beginPath();
     ctx.moveTo(x + k, top);
@@ -588,25 +611,138 @@
     ctx.fill();
   }
 
+  // the small-cut mark, drawn centred at (cx,cy) to a given width
+  var MARK = [
+    [[10,12],[28,12],[18,88],[0,88]],
+    [[41,12],[65,12],[55,88],[31,88]],
+    [[78,12],[108,12],[98,88],[68,88]]
+  ];
+  function mark(cx, cy, w, rot, fill){
+    var k = w / 110, h = 100 * k;
+    ctx.save();
+    ctx.translate(cx, cy);
+    if(rot) ctx.rotate(rot);
+    ctx.translate(-w/2, -h/2);
+    ctx.fillStyle = fill;
+    for(var i = 0; i < MARK.length; i++){
+      var pts = MARK[i];
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0]*k, pts[0][1]*k);
+      for(var j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0]*k, pts[j][1]*k);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // the house wordmark, painted into the court surface
+  function wordmark(cx, cy, targetW, alpha){
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = INK;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'italic 100px "Instrument Serif", Georgia, serif';
+    var m = ctx.measureText('encode').width || 1;
+    ctx.font = 'italic ' + (100 * (targetW / m)).toFixed(1) + 'px "Instrument Serif", Georgia, serif';
+    ctx.fillText('encode', cx, cy);
+    ctx.restore();
+  }
+
+  // the house mark, painted into the court
+  var LOGO = new Image();
+  LOGO.src = 'data:image/png;base64,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';
+  var LOGO_W = 160, LOGO_RATIO = 52/272;
+
+  // court geometry, laid out like a real one
+  var SIDE_D = 16,            // doubles sideline
+      SIDE_S = 62,            // singles sideline
+      BASE_L = 44,            // baseline, left
+      BASE_R = W - 44,        // baseline, right
+      NET    = W/2,
+      SERV_L = NET - 224,     // service line, left
+      SERV_R = NET + 224;
+
+  function courtLines(){
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(239,236,228,.11)';
+
+    function seg(x1,y1,x2,y2){
+      ctx.beginPath();
+      ctx.moveTo(x1+.5,y1+.5); ctx.lineTo(x2+.5,y2+.5); ctx.stroke();
+    }
+
+    // sidelines
+    seg(BASE_L, SIDE_D, BASE_R, SIDE_D);
+    seg(BASE_L, H-SIDE_D, BASE_R, H-SIDE_D);
+    seg(BASE_L, SIDE_S, BASE_R, SIDE_S);
+    seg(BASE_L, H-SIDE_S, BASE_R, H-SIDE_S);
+    // baselines
+    seg(BASE_L, SIDE_D, BASE_L, H-SIDE_D);
+    seg(BASE_R, SIDE_D, BASE_R, H-SIDE_D);
+    // service lines
+    seg(SERV_L, SIDE_S, SERV_L, H-SIDE_S);
+    seg(SERV_R, SIDE_S, SERV_R, H-SIDE_S);
+    // centre service line
+    seg(SERV_L, H/2, SERV_R, H/2);
+    // centre marks on the baselines
+    seg(BASE_L, H/2, BASE_L+11, H/2);
+    seg(BASE_R-11, H/2, BASE_R, H/2);
+
+    // the net
+    ctx.strokeStyle = 'rgba(239,236,228,.2)';
+    ctx.setLineDash([2, 5]);
+    seg(NET, SIDE_D - 6, NET, H - SIDE_D + 6);
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  function courtMarks(){
+    if(!LOGO.complete || !LOGO.naturalWidth) return;
+    var w = LOGO_W, h = w * LOGO_RATIO;
+    ctx.save();
+    ctx.globalAlpha = 0.26;
+    ctx.drawImage(LOGO, SERV_R + 16, 115 - h/2, w, h);              // top right, inside the back court
+    ctx.drawImage(LOGO, BASE_L + 16,  H - 115 - h/2, w, h);         // bottom left, inside the back court
+    ctx.restore();
+  }
+
   function draw(){
     ctx.clearRect(0, 0, W, H);
 
-    ctx.strokeStyle = HAIR;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([10, 16]);
-    ctx.beginPath();
-    ctx.moveTo(W/2, 10); ctx.lineTo(W/2, H - 10);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    courtLines();
+    courtMarks();
 
+    // paddles, with a breath of light
+    ctx.save();
+    ctx.shadowColor = 'rgba(239,236,228,.35)';
+    ctx.shadowBlur = 14;
     ctx.fillStyle = INK;
     bar(EDGE, player.y, false);
     bar(W - EDGE - PAD_W, ai.y, true);
+    ctx.restore();
 
+    // the ball's wake
+    for(var i = 0; i < trail.length; i++){
+      var t = (i + 1) / trail.length;
+      ctx.globalAlpha = t * 0.16;
+      ctx.fillStyle = BRASS;
+      ctx.beginPath();
+      ctx.arc(trail[i].x, trail[i].y, R * (0.35 + t * 0.6), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // the ball, clean
+    ctx.save();
+    ctx.shadowColor = 'rgba(201,162,75,.75)';
+    ctx.shadowBlur = 26;
     ctx.fillStyle = BRASS;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, R, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
 
   function clampPaddle(v){
@@ -640,6 +776,9 @@
 
     ball.x += ball.vx;
     ball.y += ball.vy;
+    spin += ball.vx * 0.016;
+    trail.push({x: ball.x, y: ball.y});
+    if(trail.length > 13) trail.shift();
 
     if(ball.y - R < 0){ ball.y = R; ball.vy *= -1; }
     if(ball.y + R > H){ ball.y = H - R; ball.vy *= -1; }
